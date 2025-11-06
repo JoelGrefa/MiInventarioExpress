@@ -2,7 +2,7 @@
   "name": "miinventarioexpress",
   "version": "1.0.0",
   "description": "MiInventarioExpress es una aplicación web para gestionar productos con autenticación de usuarios y chat en tiempo real, usando Node.js, Express, MongoDB y Socket.io.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "test": "echo \"No tests specified\" && exit 0"

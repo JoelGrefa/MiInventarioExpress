@@ -1,11 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const productosRoutes = require('./routes/productos');  // Rutas para productos
-
+const productosRoutes = require('./routes/productos');  // Ruta de productos
+const path = require('path');  // Para manejar rutas de archivos
 const app = express();
 
 // Middleware para parsear el cuerpo de las solicitudes a JSON
 app.use(express.json());
+
+// Servir archivos estáticos desde la carpeta 'uploads'
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conexión a MongoDB
 mongoose.connect('mongodb://localhost:27017/miInventario', { 
@@ -20,7 +23,7 @@ mongoose.connect('mongodb://localhost:27017/miInventario', {
 });
 
 // Usar las rutas de productos
-app.use('/api', productosRoutes);
+app.use('/api', productosRoutes);  // Prefijo /api para las rutas de productos
 
 // Iniciar el servidor en el puerto 3000
 app.listen(3000, () => {
