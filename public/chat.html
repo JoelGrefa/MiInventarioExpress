@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat en Tiempo Real</title>
+    <script src="/socket.io/socket.io.js"></script> <!-- Conexión con Socket.io -->
+    <link rel="stylesheet" href="style.css">  <!-- Vincula el archivo CSS -->
+</head>
+<body>
+    <div class="container">
+        <h1>Chat en Tiempo Real</h1>
+        
+        <!-- Campo para el nombre de usuario -->
+        <input type="text" id="nombre" placeholder="Tu nombre">
+        <br><br>
+
+        <!-- Campo para escribir el mensaje -->
+        <input type="text" id="mensaje" placeholder="Escribe un mensaje">
+        <button onclick="enviarMensaje()">Enviar</button>
+
+        <ul id="mensajes"></ul>
+    </div>
+
+    <script>
+        const socket = io();  // Conexión con el servidor Socket.io
+
+        // Función para enviar un mensaje
+        function enviarMensaje() {
+            const nombre = document.getElementById('nombre').value;
+            const mensaje = document.getElementById('mensaje').value;  // Obtener el valor del input
+            const mensajeCompleto = nombre + ': ' + mensaje;
+
+            if (mensaje.trim() !== "") {  // Asegurarse de que no se envíen mensajes vacíos
+                socket.emit('mensaje', mensajeCompleto);  // Emitir el mensaje con el nombre
+            }
+
+            // Borrar el campo de mensaje y nombre después de enviar el mensaje
+            document.getElementById('mensaje').value = '';  // Borrar el mensaje
+            document.getElementById('nombre').value = '';   // Borrar el nombre
+            document.getElementById('mensaje').focus();  // Colocar el cursor en el campo de mensaje
+        }
+
+        // Función para eliminar un mensaje
+        function eliminarMensaje(event) {
+            const li = event.target.parentNode;  // Obtener el <li> del mensaje
+            li.remove();  // Eliminar el mensaje de la lista
+        }
+
+        // Escuchar los mensajes del servidor
+        socket.on('mensaje', (data) => {
+            const ul = document.getElementById('mensajes');
+            const li = document.createElement('li');
+            li.textContent = data;  // Mostrar el mensaje recibido
+
+            // Crear un botón de eliminar con la clase 'eliminar'
+            const botonEliminar = document.createElement('button');
+            botonEliminar.textContent = 'Eliminar';
+            botonEliminar.classList.add('eliminar');  // Añadir la clase 'eliminar'
+            botonEliminar.onclick = eliminarMensaje;  // Asignar la función eliminarMensaje al botón
+
+            // Agregar el botón de eliminar al mensaje
+            li.appendChild(botonEliminar);
+
+            // Agregar el mensaje a la lista
+            ul.appendChild(li);
+        });
+
+        // Cargar el historial de mensajes al cargar la página
+        window.onload = async () => {
+            const response = await fetch('http://localhost:3000/historial');
+            const mensajes = await response.json();
+            const ul = document.getElementById('mensajes');
+            mensajes.forEach((mensaje) => {
+                const li = document.createElement('li');
+                li.textContent = `${mensaje.nombre}: ${mensaje.mensaje}`;
+                
+                // Crear un botón de eliminar
+                const botonEliminar = document.createElement('button');
+                botonEliminar.textContent = 'Eliminar';
+                botonEliminar.classList.add('eliminar');  // Añadir la clase 'eliminar'
+                botonEliminar.onclick = eliminarMensaje;  // Asignar la función eliminarMensaje al botón
+
+                // Agregar el botón de eliminar al mensaje
+                li.appendChild(botonEliminar);
+
+                // Agregar el mensaje a la lista
+                ul.appendChild(li);
+            });
+        };
+    </script>
+</body>
+</html>

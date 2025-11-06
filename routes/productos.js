@@ -87,15 +87,20 @@ router.put('/productos/:id', async (req, res) => {
 
 // Eliminar un producto
 router.delete('/productos/:id', async (req, res) => {
+    if (req.session.role !== 'admin') {
+        return res.status(403).json({ message: 'No tienes permiso para eliminar productos' });
+    }
+
     try {
         const producto = await Producto.findByIdAndDelete(req.params.id);
         if (!producto) {
             return res.status(404).json({ message: 'Producto no encontrado' });
         }
-        res.status(200).json({ message: 'Producto eliminado' });  // Mensaje de eliminación exitosa
+        res.status(200).json({ message: 'Producto eliminado' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 module.exports = router;  // Asegúrate de exportar las rutas
