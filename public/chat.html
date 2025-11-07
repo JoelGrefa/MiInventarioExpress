@@ -1,92 +1,103 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Chat en Tiempo Real</title>
-    <script src="/socket.io/socket.io.js"></script> <!-- Conexión con Socket.io -->
-    <link rel="stylesheet" href="style.css">  <!-- Vincula el archivo CSS -->
+  <meta charset="UTF-8">
+  <title>Chat en Tiempo Real</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Chat en Tiempo Real</h1>
-        
-        <!-- Campo para el nombre de usuario -->
-        <input type="text" id="nombre" placeholder="Tu nombre">
-        <br><br>
+  <nav class="nav">
+    <div class="brand">MiInventarioExpress</div>
+    <div class="nav-spacer"></div>
+    <a href="/dashboard">Panel</a>
+    <span id="userpill" class="userpill">Cargando…</span>
+    <button class="aslink" id="btnLogout">Cerrar sesión</button>
+  </nav>
 
-        <!-- Campo para escribir el mensaje -->
-        <input type="text" id="mensaje" placeholder="Escribe un mensaje">
-        <button onclick="enviarMensaje()">Enviar</button>
+  <main class="container">
+    <header class="header">
+      <h1>Chat en Tiempo Real</h1>
+      <p>Escribe y mira cómo aparece en todas las pestañas</p>
+    </header>
 
-        <ul id="mensajes"></ul>
-    </div>
+    <section class="chat-controls">
+      <input class="input" type="text" id="nombre" placeholder="Tu nombre">
+      <input class="input" type="text" id="mensaje" placeholder="Escribe un mensaje">
+      <button class="btn" onclick="enviarMensaje()">Enviar</button>
+    </section>
 
-    <script>
-        const socket = io();  // Conexión con el servidor Socket.io
+    <ul id="mensajes"></ul>
+  </main>
 
-        // Función para enviar un mensaje
-        function enviarMensaje() {
-            const nombre = document.getElementById('nombre').value;
-            const mensaje = document.getElementById('mensaje').value;  // Obtener el valor del input
-            const mensajeCompleto = nombre + ': ' + mensaje;
+  <script>
+    // Sesión en UI
+    async function loadMe() {
+      try {
+        const res = await fetch('/auth/me');
+        const data = await res.json();
+        if (!res.ok) return location.href = '/login.html';
+        document.getElementById('userpill').textContent = `${data.nombre} · ${data.role}`;
+      } catch { location.href = '/login.html'; }
+    }
+    loadMe();
 
-            if (mensaje.trim() !== "") {  // Asegurarse de que no se envíen mensajes vacíos
-                socket.emit('mensaje', mensajeCompleto);  // Emitir el mensaje con el nombre
-            }
+    document.getElementById('btnLogout').onclick = async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      location.href = '/login.html';
+    };
 
-            // Borrar el campo de mensaje y nombre después de enviar el mensaje
-            document.getElementById('mensaje').value = '';  // Borrar el mensaje
-            document.getElementById('nombre').value = '';   // Borrar el nombre
-            document.getElementById('mensaje').focus();  // Colocar el cursor en el campo de mensaje
-        }
+    // Chat
+    const socket = io();
 
-        // Función para eliminar un mensaje
-        function eliminarMensaje(event) {
-            const li = event.target.parentNode;  // Obtener el <li> del mensaje
-            li.remove();  // Eliminar el mensaje de la lista
-        }
+    function enviarMensaje() {
+      const nombre = document.getElementById('nombre').value;
+      const mensaje = document.getElementById('mensaje').value;
+      const mensajeCompleto = nombre + ': ' + mensaje;
 
-        // Escuchar los mensajes del servidor
-        socket.on('mensaje', (data) => {
-            const ul = document.getElementById('mensajes');
-            const li = document.createElement('li');
-            li.textContent = data;  // Mostrar el mensaje recibido
+      if (mensaje.trim() !== "") {
+        socket.emit('mensaje', mensajeCompleto);
+      }
+      document.getElementById('mensaje').value = '';
+      document.getElementById('nombre').value = '';
+      document.getElementById('mensaje').focus();
+    }
 
-            // Crear un botón de eliminar con la clase 'eliminar'
-            const botonEliminar = document.createElement('button');
-            botonEliminar.textContent = 'Eliminar';
-            botonEliminar.classList.add('eliminar');  // Añadir la clase 'eliminar'
-            botonEliminar.onclick = eliminarMensaje;  // Asignar la función eliminarMensaje al botón
+    function eliminarMensaje(event) {
+      const li = event.target.closest('li');
+      li?.remove();
+    }
 
-            // Agregar el botón de eliminar al mensaje
-            li.appendChild(botonEliminar);
+    socket.on('mensaje', (data) => {
+      const ul = document.getElementById('mensajes');
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${data}</span>`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Eliminar';
+      btn.className = 'btn btn-danger';
+      btn.onclick = eliminarMensaje;
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
 
-            // Agregar el mensaje a la lista
-            ul.appendChild(li);
+    // Historial (si lo tienes activo)
+    window.onload = async () => {
+      try {
+        const res = await fetch('/historial');
+        const mensajes = await res.json();
+        const ul = document.getElementById('mensajes');
+        mensajes.forEach((m) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span>${m.nombre}: ${m.mensaje}</span>`;
+          const btn = document.createElement('button');
+          btn.textContent = 'Eliminar';
+          btn.className = 'btn btn-danger';
+          btn.onclick = eliminarMensaje;
+          ul.appendChild(li);
+          li.appendChild(btn);
         });
-
-        // Cargar el historial de mensajes al cargar la página
-        window.onload = async () => {
-            const response = await fetch('http://localhost:3000/historial');
-            const mensajes = await response.json();
-            const ul = document.getElementById('mensajes');
-            mensajes.forEach((mensaje) => {
-                const li = document.createElement('li');
-                li.textContent = `${mensaje.nombre}: ${mensaje.mensaje}`;
-                
-                // Crear un botón de eliminar
-                const botonEliminar = document.createElement('button');
-                botonEliminar.textContent = 'Eliminar';
-                botonEliminar.classList.add('eliminar');  // Añadir la clase 'eliminar'
-                botonEliminar.onclick = eliminarMensaje;  // Asignar la función eliminarMensaje al botón
-
-                // Agregar el botón de eliminar al mensaje
-                li.appendChild(botonEliminar);
-
-                // Agregar el mensaje a la lista
-                ul.appendChild(li);
-            });
-        };
-    </script>
+      } catch {}
+    };
+  </script>
 </body>
 </html>

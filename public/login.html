@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Iniciar sesión</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">MiInventarioExpress</div>
+    <div class="nav-spacer"></div>
+    <a href="/register.html">Crear cuenta</a>
+  </nav>
+
+  <main class="container">
+    <header class="header">
+      <h1>Iniciar sesión</h1>
+      <p>Accede con tu email y contraseña</p>
+    </header>
+
+    <form id="form-login" class="form">
+      <input class="input" type="email" name="email" placeholder="Email" required />
+      <input class="input" type="password" name="password" placeholder="Contraseña" required />
+      <button class="btn full" type="submit">Entrar</button>
+    </form>
+
+    <p id="msg" class="status"></p>
+    <p class="helper">¿No tienes cuenta? <a href="/register.html">Regístrate</a></p>
+  </main>
+
+  <script>
+    const form = document.getElementById('form-login');
+    const msg = document.getElementById('msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const datos = new URLSearchParams(new FormData(form));
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: datos.toString()
+      });
+      const data = await res.json();
+      msg.style.display = 'block';
+      msg.textContent = data.message || JSON.stringify(data);
+      if (res.ok) setTimeout(() => location.href = '/dashboard', 600);
+    });
+  </script>
+</body>
+</html>

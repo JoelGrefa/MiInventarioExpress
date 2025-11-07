@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel | MiInventarioExpress</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">MiInventarioExpress</div>
+    <div class="nav-spacer"></div>
+    <span id="userpill" class="userpill">Cargando…</span>
+    <button class="aslink" id="btnLogout">Cerrar sesión</button>
+  </nav>
+
+  <main class="container">
+    <header class="header">
+      <h1>Panel</h1>
+      <p>Elige lo que quieras gestionar o probar</p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Productos</h3>
+        <p>Crear, listar, actualizar y eliminar productos</p>
+        <a class="btn" href="/productos-ui">Ir a Productos</a>
+      </article>
+
+      <article class="card">
+        <h3>Chat en tiempo real</h3>
+        <p>Prueba Socket.io con múltiples pestañas</p>
+        <a class="btn" href="/chat">Abrir Chat</a>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    // Mostrar usuario y permitir logout
+    async function loadMe() {
+      try {
+        const res = await fetch('/auth/me');
+        const data = await res.json();
+        if (!res.ok) return location.href = '/login.html';
+        document.getElementById('userpill').textContent = `${data.nombre} · ${data.role}`;
+      } catch {
+        location.href = '/login.html';
+      }
+    }
+    loadMe();
+
+    document.getElementById('btnLogout').onclick = async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      location.href = '/login.html';
+    };
+  </script>
+</body>
+</html>
